@@ -20,10 +20,12 @@ public class MainActivity extends AppCompatActivity {
 
     private AudioAttributes aA;
     private Dictionary<String, int[]> profiles = new Hashtable<String, int[]>();
+    private Dictionary<String, float[]> presets = new Hashtable<String, float[]>();
     List<MediaPlayer> mPs = new ArrayList<MediaPlayer>();
     ArrayList<String> profileNames = new ArrayList<String>();
     private Spinner profileMenu;
     private Graph graph;
+    private String currentProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +33,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         aA = new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
-        SetupProfiles();
         graph = (Graph) findViewById(R.id.graph);
+        SetupProfiles();
+
 
         Spinner profileMenu = findViewById(R.id.profile_menu);
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, profileNames);
@@ -41,16 +44,35 @@ public class MainActivity extends AppCompatActivity {
         profileMenu.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(graph.initialized){
+                    savePresets();
+                }
+                currentProfile = parent.getItemAtPosition(position).toString();
                 ResetMediaPlayer();
                 playProfile(parent.getItemAtPosition(position).toString());
                 graph.mPs = mPs;
+
+                float tmp[] = presets.get(currentProfile);
+                if(tmp != null && graph.initialized) {
+                    graph.SetToPresets(tmp);
+                }
             }
 
             @Override
-            public void onNothingSelected(AdapterView <?> parent) {}
+            public void onNothingSelected(AdapterView <?> parent) {
+
+            }
         });
 
 
+    }
+    private void savePresets(){
+        Node nodes[] = graph.getNodes();
+        float tmpVal[] = new float[nodes.length];
+        for(int i = 0; i < tmpVal.length; i++){
+            tmpVal[i] = nodes[i].getPosition().y;
+        }
+        presets.put(currentProfile, tmpVal);
     }
 
     private void playProfile(String profile){
@@ -58,12 +80,7 @@ public class MainActivity extends AppCompatActivity {
             MediaPlayer tmp_mP = MediaPlayer.create(getApplicationContext(), profiles.get(profile)[i], aA, i);
             tmp_mP.setLooping(true);
             tmp_mP.start();
-
-            if(i % 2 == 0)
-                tmp_mP.setVolume(0.25f, 0);
-            else
-                tmp_mP.setVolume(0, 0.25f);
-
+            tmp_mP.setVolume(0.25f, 0.25f);
             mPs.add(tmp_mP);
         }
     }
@@ -76,7 +93,17 @@ public class MainActivity extends AppCompatActivity {
                 mp = null;
             }
             mPs.clear();
-            graph.ResetNodes();
+
+
+            if(presets.get(currentProfile) == null) {
+                graph.ResetNodes();
+            }
+            else{
+                Node nodes[] = graph.getNodes();
+                for(int i = 0; i < nodes.length; i++){
+                    nodes[i].setY(presets.get(currentProfile)[i]);
+                }
+            }
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -111,6 +138,8 @@ public class MainActivity extends AppCompatActivity {
 
         profiles.put("Rain", rainIDs);
         profileNames.add("Rain");
+
+        currentProfile = profileNames.get(0);
     }
 
     @Override

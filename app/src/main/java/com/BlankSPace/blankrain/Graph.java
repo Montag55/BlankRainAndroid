@@ -33,10 +33,10 @@ public class Graph extends View {
         subgraph = new SubGraph(getHeight() * 0.33f, getHeight() * 0.66f);
     }
 
-    private void SetVolume(){
+    public void SetVolume(){
         for(int i = 1; i < nodes.length; i++){
-            mPs.get((nodes[i].index - 1) * 2).setVolume(nodes[i].volume * nodes[0].volume, 0);
-            mPs.get((nodes[i].index - 1) * 2 + 1).setVolume(0, nodes[i].volume * nodes[0].volume);
+            mPs.get((nodes[i].index - 1) * 2).setVolume(nodes[i].volume * nodes[0].volume, nodes[i].volume * nodes[0].volume);
+            mPs.get((nodes[i].index - 1) * 2 + 1).setVolume(nodes[i].volume * nodes[0].volume, nodes[i].volume * nodes[0].volume);
         }
     }
 
@@ -99,6 +99,18 @@ public class Graph extends View {
         initialized = false;
         InitNodes();
         invalidate();
+    }
+
+    public void SetToPresets(float[] preset){
+        for(int i = 0; i < preset.length; i++){
+            nodes[i].setY(preset[i]);
+        }
+        SetVolume();
+        invalidate();
+    }
+
+    public Node[] getNodes(){
+        return nodes;
     }
 
     @Override
